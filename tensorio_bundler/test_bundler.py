@@ -1,8 +1,10 @@
 import filecmp
+import glob
 import os
 import shutil
 import tempfile
 import unittest
+import zipfile
 
 from . import bundler
 
@@ -36,10 +38,26 @@ class TestBundler(unittest.TestCase):
     def test_tfbundle_build(self):
         outdir = self.create_temp_dir()
         outfile = os.path.join(outdir, 'test.tfbundle.zip')
+        tfbundle_name = 'actual.tfbundle'
         bundler.tfbundle_build(
             os.path.join(self.TEST_TFBUNDLE, 'model.tflite'),
             os.path.join(self.TEST_TFBUNDLE, 'model.json'),
             os.path.join(self.TEST_TFBUNDLE, 'assets'),
-            'actual.tfbundle',
+            tfbundle_name,
             outfile
         )
+
+        extraction_dir = self.create_temp_dir()
+        with zipfile.ZipFile(outfile, 'r') as tfbundle_zip:
+            tfbundle_zip.extractall(path=extraction_dir)
+
+        extracted_paths_glob = os.path.join(extraction_dir, tfbundle_name, '**/*')
+        extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
+        self.assertEqual(len(extracted_paths), 4)
+
+        expected_files = {'model.tflite', 'model.json', 'assets', 'assets/labels.txt'}
+        expected_paths = {
+            os.path.join(extraction_dir, tfbundle_name, expected_file)
+            for expected_file in expected_files
+        }
+        self.assertSetEqual(set(extracted_paths), expected_paths)
