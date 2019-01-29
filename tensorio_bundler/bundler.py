@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import tempfile
 import zipfile
@@ -17,19 +18,25 @@ def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfi
         # We have to use the ZipFile writestr method because there is no guarantee that
         # all the files to be included in the archive are on the same filesystem that
         # the function is running on -- they could be on GCS.
-        tflite_basename = os.path.basename(tflite_path)
-        with tf.gfile.Open(tflite_path, 'rb') as tflite_file:
-            tflite_model = tflite_file.read()
-        tfbundle_zip.writestr(
-            os.path.join(bundle_name, tflite_basename),
-            tflite_model
-        )
-
         with tf.gfile.Open(model_json_path, 'rb') as model_json_file:
             model_json = model_json_file.read()
+            model_json_string = model_json.decode('utf-8')
+            model_spec = json.loads(model_json_string)
+        # We will store the tflite file under the model_filename specified in the model.json
+        # If this is not specified, we store the file as "model.tflite"
+        # TODO(phildow): Should an unspecified 'model.file' path in the model.json raise an error?
+        tflite_spec = model_spec.get('model', {})
+        model_filename = tflite_spec.get('file', 'model.tflite')
         tfbundle_zip.writestr(
             os.path.join(bundle_name, 'model.json'),
             model_json
+        )
+
+        with tf.gfile.Open(tflite_path, 'rb') as tflite_file:
+            tflite_model = tflite_file.read()
+        tfbundle_zip.writestr(
+            os.path.join(bundle_name, model_filename),
+            tflite_model
         )
 
         if assets_path is not None:
@@ -101,8 +108,7 @@ if __name__ == '__main__':
 
         print('Building TFLite model -')
         print('SavedModel directory: {}, TFLite model: {}'.format(
-            args.saved_model_dir,
-            args.tflite_model
+            args.saved_model_dir, args.tflite_model
         ))
         tflite_build_from_saved_model(args.saved_model_dir, args.tflite_model)
 
