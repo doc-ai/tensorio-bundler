@@ -24,7 +24,6 @@ def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfi
             model_spec = json.loads(model_json_string)
         # We will store the tflite file under the model_filename specified in the model.json
         # If this is not specified, we store the file as "model.tflite"
-        # TODO(phildow): Should an unspecified 'model.file' path in the model.json raise an error?
         tflite_spec = model_spec.get('model', {})
         model_filename = tflite_spec.get('file', 'model.tflite')
         tfbundle_zip.writestr(
