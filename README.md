@@ -51,6 +51,8 @@ NOTE: These instructions are extremely sparse at the moment. They will not be so
 ### Requirements
 + Docker
 
+If you don't have it, [get it](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+
 ### Instructions
 Simply run:
 ```
