@@ -16,7 +16,6 @@ class TestBundler(unittest.TestCase):
     TEST_TFBUNDLE = os.path.join(FIXTURES_DIR, 'test.tfbundle')
 
     def setUp(self):
-        print(self.TEST_MODEL_DIR)
         self.output_directories = []
 
     def tearDown(self):
