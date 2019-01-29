@@ -28,11 +28,11 @@ class TestBundler(unittest.TestCase):
         self.output_directories.append(temp_dir)
         return temp_dir
 
-    def test_toco_build_from_saved_model(self):
+    def test_tflite_build_from_saved_model(self):
         outdir = self.create_temp_dir()
         tflite_file = os.path.join(outdir, 'model.tflite')
         bundler.tflite_build_from_saved_model(self.TEST_MODEL_DIR, tflite_file)
-        self.assertTrue(filecmp.cmp(tflite_file, self.TEST_TFLITE_FILE, shallow=False))
+        self.assertTrue(filecmp.cmp(tflite_file, self.TEST_TFLITE_FILE))
 
     def test_tfbundle_build(self):
         outdir = self.create_temp_dir()
