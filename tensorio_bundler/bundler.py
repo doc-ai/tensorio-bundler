@@ -6,13 +6,59 @@ import zipfile
 
 import tensorflow as tf
 
+class TFLiteFileExistsError(Exception):
+    """
+    Raised in the process of a TFLite build if a file (or directory) already exists
+    at the specified build path.
+    """
+    pass
+
+class ZippedTFBundleExistsError(Exception):
+    """
+    Raised in the process of a zipped tfbundle build if a file (or directory) already exists
+    at the specified build path.
+    """
+    pass
+
+class ZippedTFBundleMisspecificationError(Exception):
+    """
+    Raised in the process of a zipped tfbundle build if one or more of:
+    1. model.json
+    2. tflite binary
+    does not exist as a file.
+    """
+    pass
+
 def tflite_build_from_saved_model(saved_model_dir, outfile):
+    if tf.gfile.Exists(outfile):
+        raise TFLiteFileExistsError(
+            'ERROR: Specified TFLite binary path ({}) already exists'.format(outfile)
+        )
     converter = tf.contrib.lite.TFLiteConverter.from_saved_model(saved_model_dir)
     tflite_model = converter.convert()
     with tf.gfile.Open(outfile, 'wb') as outf:
         outf.write(tflite_model)
 
 def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfile):
+    if tf.gfile.Exists(outfile):
+        raise ZippedTFBundleExistsError(
+            'ERROR: Specified zipped tfbundle output path ({}) already exists'.format(outfile)
+        )
+
+    if not tf.gfile.Exists(tflite_path) or tf.gfile.IsDirectory(tflite_path):
+        raise ZippedTFBundleMisspecificationError(
+            'ERROR: TFLite binary path ({}) either does not exist or is not a file'.format(
+                tflite_path
+            )
+        )
+
+    if not tf.gfile.Exists(model_json_path) or tf.gfile.IsDirectory(model_json_path):
+        raise ZippedTFBundleMisspecificationError(
+            'ERROR: model.json path ({}) either does not exist or is not a file'.format(
+                tflite_path
+            )
+        )
+
     _, temp_outfile = tempfile.mkstemp(suffix='.zip')
     with zipfile.ZipFile(temp_outfile, 'w') as tfbundle_zip:
         # We have to use the ZipFile writestr method because there is no guarantee that
