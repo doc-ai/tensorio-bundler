@@ -43,6 +43,22 @@ class TestBundler(unittest.TestCase):
         with self.assertRaises(bundler.TFLiteFileExistsError):
             bundler.tflite_build_from_saved_model(self.TEST_MODEL_DIR, tflite_file)
 
+    def test_tflite_build_from_saved_model_with_no_saved_model_dir(self):
+        outdir = self.create_temp_dir()
+        nonexistent_saved_model_dir = os.path.join(outdir, 'saved_model_dir')
+        tflite_file = os.path.join(outdir, 'model.tflite')
+        with self.assertRaises(bundler.SavedModelDirMisspecificationError):
+            bundler.tflite_build_from_saved_model(nonexistent_saved_model_dir, tflite_file)
+    
+    def test_tflite_build_from_saved_model_with_file_instead_of_saved_model_dir(self):
+        outdir = self.create_temp_dir()
+        dummy_file = os.path.join(outdir, 'saved_model_dir')
+        with open(dummy_file, 'w') as ofp:
+            ofp.write('dummy')
+        tflite_file = os.path.join(outdir, 'model.tflite')
+        with self.assertRaises(bundler.SavedModelDirMisspecificationError):
+            bundler.tflite_build_from_saved_model(dummy_file, tflite_file)
+
     def test_tfbundle_build(self):
         outdir = self.create_temp_dir()
         outfile = os.path.join(outdir, 'test.tfbundle.zip')

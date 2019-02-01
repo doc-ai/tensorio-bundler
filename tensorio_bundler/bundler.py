@@ -6,6 +6,13 @@ import zipfile
 
 import tensorflow as tf
 
+class SavedModelDirMisspecificationError(Exception):
+    """
+    Raised in the process of a TFLite build if the SavedModel directory either does not
+    exist or is not a directory.
+    """
+    pass
+
 class TFLiteFileExistsError(Exception):
     """
     Raised in the process of a TFLite build if a file (or directory) already exists
@@ -34,6 +41,12 @@ def tflite_build_from_saved_model(saved_model_dir, outfile):
         raise TFLiteFileExistsError(
             'ERROR: Specified TFLite binary path ({}) already exists'.format(outfile)
         )
+    if not tf.gfile.Exists(saved_model_dir) or not tf.gfile.IsDirectory(saved_model_dir):
+        raise SavedModelDirMisspecificationError(
+            ('ERROR: Specified SavedModel directory ({}) either does not exist or is not a '
+             'directory').format(saved_model_dir)
+        )
+
     converter = tf.contrib.lite.TFLiteConverter.from_saved_model(saved_model_dir)
     tflite_model = converter.convert()
     with tf.gfile.Open(outfile, 'wb') as outf:
