@@ -77,7 +77,7 @@ class BundleHandler:
                 ', '.join(missing_keys)
             )
             raise falcon.HTTPBadRequest(message)
-        
+
         if request_body.get('saved_model_dir') is not None and request_body.get('build') != True:
             raise falcon.HTTPUnprocessableEntity(
                 description=(
@@ -85,7 +85,7 @@ class BundleHandler:
                     'specified'
                 )
             )
-        
+
         if request_body.get('build') is True and request_body.get('saved_model_dir') is None:
             raise falcon.HTTPUnprocessableEntity(
                 description=(
@@ -93,7 +93,7 @@ class BundleHandler:
                     'set to true'
                 )
             )
-        
+
         if request_body.get('build') is True:
             try:
                 bundler.tflite_build_from_saved_model(
@@ -105,8 +105,8 @@ class BundleHandler:
             except bundler.SavedModelDirMisspecificationError as e:
                 raise falcon.HTTPNotFound(description=str(e))
             except Exception as e:
-                raise falcon.HTTPInternalServerError(str(e))
-        
+                raise falcon.HTTPInternalServerError()
+
         try:
             outfile = bundler.tfbundle_build(
                 request_body.get('tflite_path'),
@@ -121,7 +121,7 @@ class BundleHandler:
             raise falcon.HTTPNotFound(description=str(e))
         except Exception:
             raise falcon.HTTPInternalServerError()
-        
+
         resp.status = falcon.HTTP_200
         resp.body = outfile
 
