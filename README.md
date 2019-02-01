@@ -31,6 +31,36 @@ python -m tensorio_bundler.bundler \
 ```
 
 
+## Calling the bundler locally through the REST API
+
+To run the REST API locally from project root (same directory as this README):
+```
+gunicorn tensorio_bundler.rest:api
+```
+
+In a separate terminal window, you can invoke the bundler as follows:
+```
+TFLITE_PATH="\"$(mktemp -d)/model.tflite\""
+
+read -r -d '' REQUEST_BODY <<-EOF
+    {
+        "saved_model_dir": "./tensorio_bundler/fixtures/test-model",
+        "build": true,
+        "tflite_path": $TFLITE_PATH,
+        "model_json_path": "./tensorio_bundler/fixtures/test.tfbundle/model.json",
+        "assets_path": "./tensorio_bundler/fixtures/test.tfbundle/assets",
+        "bundle_name": "curl-test.tfbundle",
+        "bundle_output_path": "curl-test.tfbundle.zip"
+    }
+EOF
+
+curl -v -X POST \
+    -H "Content-Type: application/json" \
+    -d "$REQUEST_BODY" \
+    http://localhost:8000/bundle
+```
+
+
 ## Running the bundler via docker
 
 ### Requirements
