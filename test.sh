@@ -10,4 +10,4 @@ DOCKER_CONTEXT=$(dirname $0)
 set -e
 
 docker build -t $DOCKER_TAG $DOCKER_CONTEXT
-docker run -it $DOCKER_TAG python -m unittest discover
+docker run -it $DOCKER_TAG python -m unittest discover -v
