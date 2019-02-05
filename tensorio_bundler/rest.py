@@ -20,10 +20,6 @@ class PingHandler:
         resp.status = falcon.HTTP_200
         resp.body = 'ok'
 
-    # def on_post(self, req, resp):
-    #     resp.status = falcon.HTTP_200
-    #     resp.body = json.dumps(req.media['lol'])
-
 class BundleHandler:
     """
     Handler for bundle creation requests
