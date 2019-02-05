@@ -1,3 +1,7 @@
+"""
+TensorIO Bundler core functionality and CLI
+"""
+
 import argparse
 import json
 import os
@@ -37,6 +41,15 @@ class ZippedTFBundleMisspecificationError(Exception):
     pass
 
 def tflite_build_from_saved_model(saved_model_dir, outfile):
+    """
+    Builds TFLite binary from SavedModel directory
+
+    Args:
+    1. saved_model_dir - Directory containing SavedModel protobuf file and variables
+    2. outfile - Path to which to write TFLite binary
+
+    Returns: None
+    """
     if tf.gfile.Exists(outfile):
         raise TFLiteFileExistsError(
             'ERROR: Specified TFLite binary path ({}) already exists'.format(outfile)
@@ -53,6 +66,18 @@ def tflite_build_from_saved_model(saved_model_dir, outfile):
         outf.write(tflite_model)
 
 def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfile):
+    """
+    Builds zipped tfbundle file (e.g. for direct download into Net Runner)
+
+    Args:
+    1. tflite_path - Path to TFLite binary
+    2. model_json_path - Path to TensorIO-compatible model.json file
+    3. assets_path - Path to TensorIO-compatible assets directory
+    4. bundle_name - Name of the bundle
+    5. outfile - Name under which the zipped tfbundle file should be stored
+
+    Returns: outfile path if the zipped tfbundle was created successfully
+    """
     if tf.gfile.Exists(outfile):
         raise ZippedTFBundleExistsError(
             'ERROR: Specified zipped tfbundle output path ({}) already exists'.format(outfile)
@@ -116,7 +141,14 @@ def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfi
 
     return outfile
 
-if __name__ == '__main__':
+def generate_argument_parser():
+    """
+    Generates an argument parser for use with the TensorIO Bundler CLI; also used by bundlebot
+
+    Args: None
+
+    Returns: None
+    """
     parser = argparse.ArgumentParser(description='Create tfbundles for use with TensorIO')
 
     parser.add_argument(
@@ -142,7 +174,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--assets-dir',
         required=False,
-        help='(Optional) Path to assets directory'
+        help='Path to assets directory'
     )
     parser.add_argument(
         '--bundle-name',
@@ -152,9 +184,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--outfile',
         required=False,
-        help='(Optional) Path at which tfbundle zipfile should be created'
+        help='Path at which tfbundle zipfile should be created; defaults to <BUNDLE_NAME>.zip'
     )
 
+    return parser
+
+
+if __name__ == '__main__':
+    parser = generate_argument_parser()
     args = parser.parse_args()
     if args.build:
         if args.saved_model_dir is None:
