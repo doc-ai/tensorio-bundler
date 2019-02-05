@@ -1,0 +1,7 @@
+TensorIO bundler released into namespace {{ .Release.Namespace }}.
+
+Deployments:
+kubectl --namespace {{ .Release.Namespace }} get deployment | grep {{ include "tensorio-bundler.fullname" . }}
+
+Services:
+kubectl --namespace {{ .Release.Namespace }} get svc | grep {{ include "tensorio-bundler.fullname" . }}

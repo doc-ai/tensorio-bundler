@@ -1,0 +1,53 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "tensorio-bundler.fullname" . }}-rest-api
+  labels:
+    app: {{ include "tensorio-bundler.name" . }}
+    chart: {{ include "tensorio-bundler.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: rest-api
+spec:
+  replicas: {{ .Values.rest.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "tensorio-bundler.name" . }}
+      release: {{ .Release.Name }}
+      component: rest-api
+  template:
+    metadata:
+      labels:
+        app: {{ include "tensorio-bundler.name" . }}
+        release: {{ .Release.Name }}
+        component: rest-api
+    spec:
+      containers:
+        - name: rest-api
+          image: "{{ .Values.rest.image.repository }}:{{ .Values.rest.image.tag }}"
+          imagePullPolicy: {{ .Values.rest.image.pullPolicy }}
+          volumeMounts:
+            - name: sacred
+              mountPath: "/etc/access"
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/etc/access/sacred.json"
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+      volumes:
+        - name: sacred
+          secret:
+            secretName: {{ .Values.secret.name }}
+            items:
+              - key: {{ .Values.secret.sacredKey }}
+                path: sacred.json
