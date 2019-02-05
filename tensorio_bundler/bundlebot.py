@@ -9,6 +9,20 @@ import requests
 
 from . import bundler
 
+def slack_url_text(maybe_slack_url):
+    """
+    If input is a slack-encoded URL (enclosed by < and >), then returns the raw URL, otherwise
+    returns the input directly
+
+    Args:
+    1. maybe_slack_url - What is potentially a slack-encoded URL
+
+    Returns: URL string
+    """
+    if maybe_slack_url[0] == '<' and maybe_slack_url[-1] == '>':
+        return maybe_slack_url[1:-1]
+    return maybe_slack_url
+
 def generate_bundler_client(bundler_rest_api_url):
     """
     Generates a client for a given TensorIO Bundler REST API instance.
@@ -42,12 +56,12 @@ def generate_bundler_client(bundler_rest_api_url):
         """
         payload = {
             'build': build,
-            'saved_model_dir': saved_model_dir,
-            'tflite_path': tflite_model,
-            'model_json_path': model_json,
-            'assets_path': assets_dir,
+            'saved_model_dir': slack_url_text(saved_model_dir),
+            'tflite_path': slack_url_text(tflite_model),
+            'model_json_path': slack_url_text(model_json),
+            'assets_path': slack_url_text(assets_dir),
             'bundle_name': bundle_name,
-            'bundle_output_path': outfile
+            'bundle_output_path': slack_url_text(outfile)
         }
 
         response = requests.post(bundler_rest_api_url, json=payload)
