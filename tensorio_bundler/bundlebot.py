@@ -58,11 +58,15 @@ def generate_bundler_client(bundler_rest_api_url):
 if __name__ == '__main__':
     bot_user_access_token = os.environ.get('SLACK_BOT_USER_OAUTH_ACCESS_TOKEN')
     if bot_user_access_token is None:
-        raise ValueError('ERROR: SLACK_BOT_USER_OAUTH_ACCESS_TOKEN environment variable undefined')
+        raise ValueError('ERROR: SLACK_BOT_USER_OAUTH_ACCESS_TOKEN environment variable not set')
 
     rtm_poll_interval = int(os.environ.get('RTM_POLL_INTERVAL', '1'))
 
-    bundler_client = generate_bundler_client('http://localhost:8000/bundle')
+    bundler_url = os.environ.get('BUNDLER_URL')
+    if bundler_url is None:
+        raise ValueError('ERROR: BUNDLER_URL environment variable not set')
+
+    bundler_client = generate_bundler_client(bundler_url)
 
     parser = bundler.generate_argument_parser()
     bundlebot = parse.wrap_runner(parser, bundler_client)
