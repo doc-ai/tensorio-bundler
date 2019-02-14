@@ -1,0 +1,23 @@
+# Default values for tensorio-bundler.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+rest:
+  replicaCount: 1
+  image:
+    repository: docai/tensorio-bundler
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+bundlebot:
+  image:
+    repository: docai/tensorio-bundler
+    tag: latest
+    pullPolicy: Always
+  rtmPollInterval: "2"
+secret:
+  name: tensorio-bundler
+  sacredKey: sacred.json
+  botUserAccessTokenKey: bot-user-access-token

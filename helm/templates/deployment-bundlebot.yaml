@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "tensorio-bundler.fullname" . }}-bundlebot
+  labels:
+    app: {{ include "tensorio-bundler.name" . }}
+    chart: {{ include "tensorio-bundler.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: bundlebot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "tensorio-bundler.name" . }}
+      release: {{ .Release.Name }}
+      component: bundlebot
+  template:
+    metadata:
+      labels:
+        app: {{ include "tensorio-bundler.name" . }}
+        release: {{ .Release.Name }}
+        component: bundlebot
+    spec:
+      containers:
+        - name: bundlebot
+          image: "{{ .Values.bundlebot.image.repository }}:{{ .Values.bundlebot.image.tag }}"
+          imagePullPolicy: {{ .Values.bundlebot.image.pullPolicy }}
+          env: 
+            - name: SLACK_BOT_USER_OAUTH_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.secret.botUserAccessTokenKey }}
+            - name: RTM_POLL_INTERVAL
+              value: {{ .Values.bundlebot.rtmPollInterval }}
+            - name: BUNDLER_URL
+              value: http://{{ include "tensorio-bundler.fullname" . }}:{{ .Values.rest.service.port }}/bundle
+          command: ["python", "-m", "tensorio_bundler.bundlebot"]

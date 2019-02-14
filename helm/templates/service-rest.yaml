@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tensorio-bundler.fullname" . }}
+  labels:
+    app: {{ include "tensorio-bundler.name" . }}
+    chart: {{ include "tensorio-bundler.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.rest.service.type }}
+  ports:
+    - port: {{ .Values.rest.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ include "tensorio-bundler.name" . }}
+    release: {{ .Release.Name }}
+    component: rest-api
