@@ -15,7 +15,7 @@ class TestBundler(unittest.TestCase):
     )
     TEST_MODEL_DIR = os.path.join(FIXTURES_DIR, 'test-model')
     TEST_TFLITE_FILE = os.path.join(FIXTURES_DIR, 'test.tflite')
-    TEST_TFBUNDLE = os.path.join(FIXTURES_DIR, 'test.tfbundle')
+    TEST_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'test.tiobundle')
 
     def setUp(self):
         self.output_directories = []
@@ -59,100 +59,100 @@ class TestBundler(unittest.TestCase):
         with self.assertRaises(bundler.SavedModelDirMisspecificationError):
             bundler.tflite_build_from_saved_model(dummy_file, tflite_file)
 
-    def test_tfbundle_build(self):
+    def test_tiobundle_build(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
-        tfbundle_name = 'actual.tfbundle'
-        bundler.tfbundle_build(
-            os.path.join(self.TEST_TFBUNDLE, 'model.tflite'),
-            os.path.join(self.TEST_TFBUNDLE, 'model.json'),
-            os.path.join(self.TEST_TFBUNDLE, 'assets'),
-            tfbundle_name,
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        bundler.tiobundle_build(
+            os.path.join(self.TEST_TIOBUNDLE, 'model.tflite'),
+            os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
+            os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+            tiobundle_name,
             outfile
         )
 
         extraction_dir = self.create_temp_dir()
-        with zipfile.ZipFile(outfile, 'r') as tfbundle_zip:
-            tfbundle_zip.extractall(path=extraction_dir)
+        with zipfile.ZipFile(outfile, 'r') as tiobundle_zip:
+            tiobundle_zip.extractall(path=extraction_dir)
 
-        extracted_paths_glob = os.path.join(extraction_dir, tfbundle_name, '**/*')
+        extracted_paths_glob = os.path.join(extraction_dir, tiobundle_name, '**/*')
         extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
         self.assertEqual(len(extracted_paths), 4)
 
         expected_files = {'model.tflite', 'model.json', 'assets', 'assets/labels.txt'}
         expected_paths = {
-            os.path.join(extraction_dir, tfbundle_name, expected_file)
+            os.path.join(extraction_dir, tiobundle_name, expected_file)
             for expected_file in expected_files
         }
         self.assertSetEqual(set(extracted_paths), expected_paths)
 
-    def test_tfbundle_build_when_outfile_already_exists(self):
+    def test_tiobundle_build_when_outfile_already_exists(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
         with open(outfile, 'w') as ofp:
             ofp.write('dummy')
-        tfbundle_name = 'actual.tfbundle'
-        with self.assertRaises(bundler.ZippedTFBundleExistsError):
-            bundler.tfbundle_build(
-                os.path.join(self.TEST_TFBUNDLE, 'model.tflite'),
-                os.path.join(self.TEST_TFBUNDLE, 'model.json'),
-                os.path.join(self.TEST_TFBUNDLE, 'assets'),
-                tfbundle_name,
+        tiobundle_name = 'actual.tiobundle'
+        with self.assertRaises(bundler.ZippedTIOBundleExistsError):
+            bundler.tiobundle_build(
+                os.path.join(self.TEST_TIOBUNDLE, 'model.tflite'),
+                os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
+                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+                tiobundle_name,
                 outfile
             )
 
-    def test_tfbundle_build_when_tflite_path_does_not_exist(self):
+    def test_tiobundle_build_when_tflite_path_does_not_exist(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
-        tfbundle_name = 'actual.tfbundle'
-        with self.assertRaises(bundler.ZippedTFBundleMisspecificationError):
-            bundler.tfbundle_build(
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
+            bundler.tiobundle_build(
                 os.path.join(outdir, 'model.tflite'),
-                os.path.join(self.TEST_TFBUNDLE, 'model.json'),
-                os.path.join(self.TEST_TFBUNDLE, 'assets'),
-                tfbundle_name,
+                os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
+                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+                tiobundle_name,
                 outfile
             )
 
-    def test_tfbundle_build_when_tflite_path_is_not_file(self):
+    def test_tiobundle_build_when_tflite_path_is_not_file(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
-        tfbundle_name = 'actual.tfbundle'
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
         tflite_path = os.path.join(outdir, 'model.tflite')
         os.mkdir(tflite_path)
-        with self.assertRaises(bundler.ZippedTFBundleMisspecificationError):
-            bundler.tfbundle_build(
+        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
+            bundler.tiobundle_build(
                 tflite_path,
-                os.path.join(self.TEST_TFBUNDLE, 'model.json'),
-                os.path.join(self.TEST_TFBUNDLE, 'assets'),
-                tfbundle_name,
+                os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
+                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+                tiobundle_name,
                 outfile
             )
 
-    def test_tfbundle_build_when_model_json_path_does_not_exist(self):
+    def test_tiobundle_build_when_model_json_path_does_not_exist(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
-        tfbundle_name = 'actual.tfbundle'
-        with self.assertRaises(bundler.ZippedTFBundleMisspecificationError):
-            bundler.tfbundle_build(
-                os.path.join(self.TEST_TFBUNDLE, 'model.tflite'),
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
+            bundler.tiobundle_build(
+                os.path.join(self.TEST_TIOBUNDLE, 'model.tflite'),
                 os.path.join(outdir, 'model.json'),
-                os.path.join(self.TEST_TFBUNDLE, 'assets'),
-                tfbundle_name,
+                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+                tiobundle_name,
                 outfile
             )
 
-    def test_tfbundle_build_when_model_json_path_is_not_file(self):
+    def test_tiobundle_build_when_model_json_path_is_not_file(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
-        tfbundle_name = 'actual.tfbundle'
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
         model_json_path = os.path.join(outdir, 'model.json')
         os.mkdir(model_json_path)
-        with self.assertRaises(bundler.ZippedTFBundleMisspecificationError):
-            bundler.tfbundle_build(
-                os.path.join(self.TEST_TFBUNDLE, 'model.tflite'),
+        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
+            bundler.tiobundle_build(
+                os.path.join(self.TEST_TIOBUNDLE, 'model.tflite'),
                 model_json_path,
-                os.path.join(self.TEST_TFBUNDLE, 'assets'),
-                tfbundle_name,
+                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+                tiobundle_name,
                 outfile
             )

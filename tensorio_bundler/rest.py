@@ -35,7 +35,7 @@ class BundleHandler:
 
     def on_post(self, req, resp):
         """
-        Accepts POST requests to create a tfbundle from:
+        Accepts POST requests to create a tiobundle from:
         1. A model.json file (GCS path)
         2. An assets directory (GCS path)
         3. A TFLite binary path and a SavedModel binary path (in the case that a SavedModel binary
@@ -47,13 +47,13 @@ class BundleHandler:
         5. Bundle output path
 
         Possible responses:
-        + Responds with status code 200 and body containing the GCS path of the tfbundle if the
+        + Responds with status code 200 and body containing the GCS path of the tiobundle if the
           bundle was created successfully.
         + Responds with a status code of 400 if the request body is either not a processable JSON
           string or if it does not specify the appropriate fields or if the fields are inappropriate
           to the request (e.g. missing keys). The body of the response will specify the erroneous
           conditions.
-        + Responds with a status code of 409 if a file already exists at the given tfbundle path.
+        + Responds with a status code of 409 if a file already exists at the given tiobundle path.
           The response body will be a string specifying the GCS path and stating that a file already
           exists there.
         + Responds with a status code of 422 if a SavedModel path is specified but the build flag is
@@ -108,16 +108,16 @@ class BundleHandler:
                 raise falcon.HTTPInternalServerError()
 
         try:
-            outfile = bundler.tfbundle_build(
+            outfile = bundler.tiobundle_build(
                 request_body.get('tflite_path'),
                 request_body.get('model_json_path'),
                 request_body.get('assets_path'),
                 request_body.get('bundle_name'),
                 request_body.get('bundle_output_path')
             )
-        except bundler.ZippedTFBundleExistsError as e:
+        except bundler.ZippedTIOBundleExistsError as e:
             raise falcon.HTTPConflict(description=str(e))
-        except bundler.ZippedTFBundleMisspecificationError as e:
+        except bundler.ZippedTIOBundleMisspecificationError as e:
             raise falcon.HTTPNotFound(description=str(e))
         except Exception:
             raise falcon.HTTPInternalServerError()

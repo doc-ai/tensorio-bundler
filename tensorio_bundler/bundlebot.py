@@ -49,10 +49,10 @@ def generate_bundler_client(bundler_rest_api_url):
         3. tflite_model - Path to TFLite binary
         4. model_json - Path to TensorIO-compatible model.json file
         5. assets_dir - Path to TensorIO-compatible assets directory
-        6. bundle_name - Name of TensorIO tfbundle
-        7. outfile - Path to which to write zipped tfbundle file
+        6. bundle_name - Name of TensorIO tiobundle
+        7. outfile - Path to which to write zipped tiobundle file
 
-        Returns: Path at which zipped tfbundle was stored
+        Returns: Path at which zipped tiobundle was stored
         """
         payload = {
             'build': build,
