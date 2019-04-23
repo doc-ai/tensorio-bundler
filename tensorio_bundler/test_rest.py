@@ -14,7 +14,7 @@ class TestRestAPI(testing.TestCase):
     )
     TEST_MODEL_DIR = os.path.join(FIXTURES_DIR, 'test-model')
     TEST_TFLITE_FILE = os.path.join(FIXTURES_DIR, 'test.tflite')
-    TEST_TFBUNDLE = os.path.join(FIXTURES_DIR, 'test.tfbundle')
+    TEST_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'test.tiobundle')
 
     def setUp(self):
         self.api = testing.TestClient(rest.api)
@@ -36,13 +36,13 @@ class TestRestAPI(testing.TestCase):
     
     def test_bundle_from_tflite(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
 
         body = {
-            'tflite_path': os.path.join(self.TEST_TFBUNDLE, 'model.tflite'),
-            'model_json_path': os.path.join(self.TEST_TFBUNDLE, 'model.json'),
-            'assets_path': os.path.join(self.TEST_TFBUNDLE, 'assets'),
-            'bundle_name': 'actual.tfbundle',
+            'tflite_path': os.path.join(self.TEST_TIOBUNDLE, 'model.tflite'),
+            'model_json_path': os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
+            'assets_path': os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+            'bundle_name': 'actual.tiobundle',
             'bundle_output_path': outfile
         }
 
@@ -56,15 +56,15 @@ class TestRestAPI(testing.TestCase):
 
     def test_bundle_from_saved_model_dir(self):
         outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tfbundle.zip')
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
 
         body = {
             'saved_model_dir': self.TEST_MODEL_DIR,
             'build': True,
             'tflite_path': os.path.join(outdir, 'model.tflite'),
-            'model_json_path': os.path.join(self.TEST_TFBUNDLE, 'model.json'),
-            'assets_path': os.path.join(self.TEST_TFBUNDLE, 'assets'),
-            'bundle_name': 'actual.tfbundle',
+            'model_json_path': os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
+            'assets_path': os.path.join(self.TEST_TIOBUNDLE, 'assets'),
+            'bundle_name': 'actual.tiobundle',
             'bundle_output_path': outfile
         }
 

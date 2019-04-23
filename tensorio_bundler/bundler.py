@@ -24,16 +24,16 @@ class TFLiteFileExistsError(Exception):
     """
     pass
 
-class ZippedTFBundleExistsError(Exception):
+class ZippedTIOBundleExistsError(Exception):
     """
-    Raised in the process of a zipped tfbundle build if a file (or directory) already exists
+    Raised in the process of a zipped tiobundle build if a file (or directory) already exists
     at the specified build path.
     """
     pass
 
-class ZippedTFBundleMisspecificationError(Exception):
+class ZippedTIOBundleMisspecificationError(Exception):
     """
-    Raised in the process of a zipped tfbundle build if one or more of:
+    Raised in the process of a zipped tiobundle build if one or more of:
     1. model.json
     2. tflite binary
     does not exist as a file.
@@ -65,40 +65,40 @@ def tflite_build_from_saved_model(saved_model_dir, outfile):
     with tf.gfile.Open(outfile, 'wb') as outf:
         outf.write(tflite_model)
 
-def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfile):
+def tiobundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfile):
     """
-    Builds zipped tfbundle file (e.g. for direct download into Net Runner)
+    Builds zipped tiobundle file (e.g. for direct download into Net Runner)
 
     Args:
     1. tflite_path - Path to TFLite binary
     2. model_json_path - Path to TensorIO-compatible model.json file
     3. assets_path - Path to TensorIO-compatible assets directory
     4. bundle_name - Name of the bundle
-    5. outfile - Name under which the zipped tfbundle file should be stored
+    5. outfile - Name under which the zipped tiobundle file should be stored
 
-    Returns: outfile path if the zipped tfbundle was created successfully
+    Returns: outfile path if the zipped tiobundle was created successfully
     """
     if tf.gfile.Exists(outfile):
-        raise ZippedTFBundleExistsError(
-            'ERROR: Specified zipped tfbundle output path ({}) already exists'.format(outfile)
+        raise ZippedTIOBundleExistsError(
+            'ERROR: Specified zipped tiobundle output path ({}) already exists'.format(outfile)
         )
 
     if not tf.gfile.Exists(tflite_path) or tf.gfile.IsDirectory(tflite_path):
-        raise ZippedTFBundleMisspecificationError(
+        raise ZippedTIOBundleMisspecificationError(
             'ERROR: TFLite binary path ({}) either does not exist or is not a file'.format(
                 tflite_path
             )
         )
 
     if not tf.gfile.Exists(model_json_path) or tf.gfile.IsDirectory(model_json_path):
-        raise ZippedTFBundleMisspecificationError(
+        raise ZippedTIOBundleMisspecificationError(
             'ERROR: model.json path ({}) either does not exist or is not a file'.format(
                 tflite_path
             )
         )
 
     _, temp_outfile = tempfile.mkstemp(suffix='.zip')
-    with zipfile.ZipFile(temp_outfile, 'w') as tfbundle_zip:
+    with zipfile.ZipFile(temp_outfile, 'w') as tiobundle_zip:
         # We have to use the ZipFile writestr method because there is no guarantee that
         # all the files to be included in the archive are on the same filesystem that
         # the function is running on -- they could be on GCS.
@@ -110,14 +110,14 @@ def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfi
         # If this is not specified, we store the file as "model.tflite"
         tflite_spec = model_spec.get('model', {})
         model_filename = tflite_spec.get('file', 'model.tflite')
-        tfbundle_zip.writestr(
+        tiobundle_zip.writestr(
             os.path.join(bundle_name, 'model.json'),
             model_json
         )
 
         with tf.gfile.Open(tflite_path, 'rb') as tflite_file:
             tflite_model = tflite_file.read()
-        tfbundle_zip.writestr(
+        tiobundle_zip.writestr(
             os.path.join(bundle_name, model_filename),
             tflite_model
         )
@@ -131,7 +131,7 @@ def tfbundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfi
                 asset_basename = os.path.basename(asset)
                 with tf.gfile.Open(asset, 'rb') as asset_file:
                     asset_bytes = asset_file.read()
-                tfbundle_zip.writestr(
+                tiobundle_zip.writestr(
                     os.path.join(bundle_name, 'assets', asset_basename),
                     asset_bytes
                 )
@@ -149,7 +149,7 @@ def generate_argument_parser():
 
     Returns: None
     """
-    parser = argparse.ArgumentParser(description='Create tfbundles for use with TensorIO')
+    parser = argparse.ArgumentParser(description='Create tiobundles for use with TensorIO')
 
     parser.add_argument(
         '--build',
@@ -179,12 +179,12 @@ def generate_argument_parser():
     parser.add_argument(
         '--bundle-name',
         required=True,
-        help='Name of tfbundle'
+        help='Name of tiobundle'
     )
     parser.add_argument(
         '--outfile',
         required=False,
-        help='Path at which tfbundle zipfile should be created; defaults to <BUNDLE_NAME>.zip'
+        help='Path at which tiobundle zipfile should be created; defaults to <BUNDLE_NAME>.zip'
     )
 
     return parser
@@ -207,18 +207,18 @@ if __name__ == '__main__':
         ))
         tflite_build_from_saved_model(args.saved_model_dir, args.tflite_model)
 
-    tfbundle_zip = args.outfile
-    if tfbundle_zip is None:
-        tfbundle_zip = '{}.zip'.format(args.bundle_name)
+    tiobundle_zip = args.outfile
+    if tiobundle_zip is None:
+        tiobundle_zip = '{}.zip'.format(args.bundle_name)
 
-    print('Building tfbundle -')
+    print('Building tiobundle -')
     print('TFLite model: {}, model.json: {}, assets directory: {}, bundle: {}, zipfile: {}'.format(
         args.tflite_model,
         args.model_json,
         args.assets_dir,
         args.bundle_name,
-        tfbundle_zip
+        tiobundle_zip
     ))
-    tfbundle_build(args.tflite_model, args.model_json, args.assets_dir, args.bundle_name, tfbundle_zip)
+    tiobundle_build(args.tflite_model, args.model_json, args.assets_dir, args.bundle_name, tiobundle_zip)
 
     print('Done!')

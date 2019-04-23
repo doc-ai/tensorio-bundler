@@ -12,7 +12,7 @@ to use whatever binary the corresponding `pip install` produces.
 
 ### Instructions
 The `tensorio_bundler` module comes with a `bundler` utility that you can use to create TensorIO
-zipped tfbundle files directly from your command line.
+zipped tiobundle files directly from your command line.
 
 For more information on how to run the `bundler`, run:
 ```
@@ -24,10 +24,10 @@ README):
 ```
 python -m tensorio_bundler.bundler \
     --tflite-model ./tensorio_bundler/fixtures/test.tflite \
-    --model-json ./tensorio_bundler/fixtures/test.tfbundle/model.json \
-    --assets-dir ./tensorio_bundler/fixtures/test.tfbundle/assets \
-    --bundle-name sample.tfbundle \
-    --outfile sample.tfbundle.zip
+    --model-json ./tensorio_bundler/fixtures/test.tiobundle/model.json \
+    --assets-dir ./tensorio_bundler/fixtures/test.tiobundle/assets \
+    --bundle-name sample.tiobundle \
+    --outfile sample.tiobundle.zip
 ```
 
 
@@ -47,10 +47,10 @@ read -r -d '' REQUEST_BODY <<-EOF
         "saved_model_dir": "./tensorio_bundler/fixtures/test-model",
         "build": true,
         "tflite_path": $TFLITE_PATH,
-        "model_json_path": "./tensorio_bundler/fixtures/test.tfbundle/model.json",
-        "assets_path": "./tensorio_bundler/fixtures/test.tfbundle/assets",
-        "bundle_name": "curl-test.tfbundle",
-        "bundle_output_path": "curl-test.tfbundle.zip"
+        "model_json_path": "./tensorio_bundler/fixtures/test.tiobundle/model.json",
+        "assets_path": "./tensorio_bundler/fixtures/test.tiobundle/assets",
+        "bundle_name": "curl-test.tiobundle",
+        "bundle_output_path": "curl-test.tiobundle.zip"
     }
 EOF
 
