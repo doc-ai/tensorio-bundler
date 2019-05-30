@@ -17,6 +17,7 @@ class TestBundler(unittest.TestCase):
     TEST_TFLITE_FILE = os.path.join(FIXTURES_DIR, 'test.tflite')
     TEST_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'test.tiobundle')
     NESTED_ASSETS_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'nested-assets-dir.tiobundle')
+    SAVED_MODEL_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'savedmodel.tiobundle')
 
     def setUp(self):
         self.output_directories = []
@@ -80,6 +81,43 @@ class TestBundler(unittest.TestCase):
         extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
 
         expected_files = {'model.tflite', 'model.json', 'assets', 'assets/labels.txt'}
+        self.assertEqual(len(extracted_paths), len(expected_files))
+
+        expected_paths = {
+            os.path.join(extraction_dir, tiobundle_name, expected_file)
+            for expected_file in expected_files
+        }
+        self.assertSetEqual(set(extracted_paths), expected_paths)
+
+    def test_savedmodel_tiobundle_build(self):
+        outdir = self.create_temp_dir()
+        outfile = os.path.join(outdir, 'savedmodel.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        bundler.tiobundle_build(
+            os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'train'),
+            os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'model.json'),
+            os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'assets'),
+            tiobundle_name,
+            outfile
+        )
+
+        extraction_dir = self.create_temp_dir()
+        with zipfile.ZipFile(outfile, 'r') as tiobundle_zip:
+            tiobundle_zip.extractall(path=extraction_dir)
+
+        extracted_paths_glob = os.path.join(extraction_dir, tiobundle_name, '**/*')
+        extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
+
+        expected_files = {
+            'train',
+            'train/saved_model.pb',
+            'train/variables',
+            'train/variables/variables.index',
+            'train/variables/variables.data-00000-of-00001',
+            'model.json',
+            'assets',
+            'assets/labels.txt'
+        }
         self.assertEqual(len(extracted_paths), len(expected_files))
 
         expected_paths = {
