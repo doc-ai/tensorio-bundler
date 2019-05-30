@@ -173,7 +173,7 @@ def write_assets_to_zipfile(assets_dir, zfile, zip_subdir):
                 raise TIOZipError(message)
 
     for assets_subdir in assets_subdirs:
-        write_assets_to_zfile(assets_subdir, zfile, assets_subdirs[assets_subdir])
+        write_assets_to_zipfile(assets_subdir, zfile, assets_subdirs[assets_subdir])
 
     return None
 
