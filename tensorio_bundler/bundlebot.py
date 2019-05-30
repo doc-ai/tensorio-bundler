@@ -58,12 +58,14 @@ def generate_bundler_client(bundler_rest_api_url):
         payload = {
             'build': build,
             'saved_model_dir': slack_url_text(saved_model_dir),
-            'tflite_model': slack_url_text(tflite_model),
             'model_json_path': slack_url_text(model_json),
             'assets_path': slack_url_text(assets_dir),
             'bundle_name': bundle_name,
             'bundle_output_path': slack_url_text(outfile)
         }
+
+        if tflite_model is not None:
+            payload['tflite_model'] = slack_url_text(tflite_model)
 
         response = requests.post(bundler_rest_api_url, json=payload)
         return response.text
