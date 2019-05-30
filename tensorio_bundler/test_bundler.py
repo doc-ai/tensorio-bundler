@@ -152,21 +152,6 @@ class TestBundler(unittest.TestCase):
                 outfile
             )
 
-    def test_tiobundle_build_when_tflite_path_is_not_file(self):
-        outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tiobundle.zip')
-        tiobundle_name = 'actual.tiobundle'
-        tflite_path = os.path.join(outdir, 'model.tflite')
-        os.mkdir(tflite_path)
-        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
-            bundler.tiobundle_build(
-                tflite_path,
-                os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
-                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
-                tiobundle_name,
-                outfile
-            )
-
     def test_tiobundle_build_when_model_json_path_does_not_exist(self):
         outdir = self.create_temp_dir()
         outfile = os.path.join(outdir, 'test.tiobundle.zip')

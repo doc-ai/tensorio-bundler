@@ -10,6 +10,9 @@ import zipfile
 
 import tensorflow as tf
 
+TFLITE = 'tflite'
+SAVED_MODEL = 'savedmodel'
+
 class SavedModelDirMisspecificationError(Exception):
     """
     Raised in the process of a TFLite build if the SavedModel directory either does not
@@ -71,12 +74,12 @@ def tflite_build_from_saved_model(saved_model_dir, outfile):
     with tf.gfile.Open(outfile, 'wb') as outf:
         outf.write(tflite_model)
 
-def tiobundle_build(tflite_path, model_json_path, assets_path, bundle_name, outfile):
+def tiobundle_build(model_path, model_json_path, assets_path, bundle_name, outfile):
     """
     Builds zipped tiobundle file (e.g. for direct download into Net Runner)
 
     Args:
-    1. tflite_path - Path to TFLite binary
+    1. model_path - Path to TFLite binary or SavedModel directory
     2. model_json_path - Path to TensorIO-compatible model.json file
     3. assets_path - Path to TensorIO-compatible assets directory
     4. bundle_name - Name of the bundle
@@ -89,17 +92,17 @@ def tiobundle_build(tflite_path, model_json_path, assets_path, bundle_name, outf
             'ERROR: Specified zipped tiobundle output path ({}) already exists'.format(outfile)
         )
 
-    if not tf.gfile.Exists(tflite_path) or tf.gfile.IsDirectory(tflite_path):
+    if not tf.gfile.Exists(model_path):
         raise ZippedTIOBundleMisspecificationError(
-            'ERROR: TFLite binary path ({}) either does not exist or is not a file'.format(
-                tflite_path
+            'ERROR: TFLite binary path ({}) does not exist'.format(
+                model_path
             )
         )
 
     if not tf.gfile.Exists(model_json_path) or tf.gfile.IsDirectory(model_json_path):
         raise ZippedTIOBundleMisspecificationError(
             'ERROR: model.json path ({}) either does not exist or is not a file'.format(
-                tflite_path
+                model_path
             )
         )
 
@@ -112,21 +115,28 @@ def tiobundle_build(tflite_path, model_json_path, assets_path, bundle_name, outf
             model_json = model_json_file.read()
             model_json_string = model_json.decode('utf-8')
             model_spec = json.loads(model_json_string)
-        # We will store the tflite file under the model_filename specified in the model.json
-        # If this is not specified, we store the file as "model.tflite"
-        tflite_spec = model_spec.get('model', {})
-        model_filename = tflite_spec.get('file', 'model.tflite')
         tiobundle_zip.writestr(
             os.path.join(bundle_name, 'model.json'),
             model_json
         )
 
-        with tf.gfile.Open(tflite_path, 'rb') as tflite_file:
-            tflite_model = tflite_file.read()
-        tiobundle_zip.writestr(
-            os.path.join(bundle_name, model_filename),
-            tflite_model
-        )
+        if tf.gfile.IsDirectory(model_path):
+            # We are bundling a SavedModel directory.
+            # It goes into the train/ subdirectory of bundle
+            saved_model_target = os.path.join(bundle_name, 'train')
+            write_assets_to_zipfile(model_path, tiobundle_zip, saved_model_target)
+        else:
+            # We are bundling a tflite file.
+            # We will store the tflite file under the model_filename specified in the model.json
+            # If this is not specified, we store the file as "model.tflite"
+            tflite_spec = model_spec.get('model', {})
+            model_filename = tflite_spec.get('file', 'model.tflite')
+            with tf.gfile.Open(model_path, 'rb') as tflite_file:
+                tflite_model = tflite_file.read()
+            tiobundle_zip.writestr(
+                os.path.join(bundle_name, model_filename),
+                tflite_model
+            )
 
         if assets_path is not None:
             assets_zip_target = os.path.join(bundle_name, 'assets')
@@ -189,17 +199,18 @@ def generate_argument_parser():
 
     parser.add_argument(
         '--build',
-        action='store_true',
-        help='Specifies whether a TFLite file should be built at the specified tflite model path'
+        required=True,
+        choices={TFLITE, SAVED_MODEL},
+        help='Specifies whether bundle is being built with tflite file or SavedModel binary.'
     )
     parser.add_argument(
         '--saved-model-dir',
-        required=False,
-        help='Path to SavedModel pb file and variables'
+        required=True,
+        help='Path to directory containing SavedModel pb file and variables (GCS ok)'
     )
     parser.add_argument(
         '--tflite-model',
-        required=True,
+        required=False,
         help='Path to TFLite model (GCS allowed)'
     )
     parser.add_argument(
@@ -229,13 +240,16 @@ def generate_argument_parser():
 if __name__ == '__main__':
     parser = generate_argument_parser()
     args = parser.parse_args()
-    if args.build:
-        if args.saved_model_dir is None:
+    model_path = args.saved_model_dir
+    if args.build == TFLITE:
+        if args.tflite_model is None:
             raise ValueError(
-                'ERROR: When calling script with --build enabled, specify --saved-model-dir'
+                '--tflite-model argument must be specified when --build={}'.format(TFLITE)
             )
         if tf.gfile.Exists(args.tflite_model):
             raise Exception('ERROR: TFLite model already exists - {}'.format(args.tflite_model))
+
+        model_path = args.tflite_model
 
         print('Building TFLite model -')
         print('SavedModel directory: {}, TFLite model: {}'.format(
@@ -248,13 +262,13 @@ if __name__ == '__main__':
         tiobundle_zip = '{}.zip'.format(args.bundle_name)
 
     print('Building tiobundle -')
-    print('TFLite model: {}, model.json: {}, assets directory: {}, bundle: {}, zipfile: {}'.format(
-        args.tflite_model,
+    print('model: {}, model.json: {}, assets directory: {}, bundle: {}, zipfile: {}'.format(
+        model_path,
         args.model_json,
         args.assets_dir,
         args.bundle_name,
         tiobundle_zip
     ))
-    tiobundle_build(args.tflite_model, args.model_json, args.assets_dir, args.bundle_name, tiobundle_zip)
+    tiobundle_build(model_path, args.model_json, args.assets_dir, args.bundle_name, tiobundle_zip)
 
     print('Done!')
