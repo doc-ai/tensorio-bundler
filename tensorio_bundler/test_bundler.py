@@ -16,6 +16,8 @@ class TestBundler(unittest.TestCase):
     TEST_MODEL_DIR = os.path.join(FIXTURES_DIR, 'test-model')
     TEST_TFLITE_FILE = os.path.join(FIXTURES_DIR, 'test.tflite')
     TEST_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'test.tiobundle')
+    NESTED_ASSETS_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'nested-assets-dir.tiobundle')
+    SAVED_MODEL_TIOBUNDLE = os.path.join(FIXTURES_DIR, 'savedmodel.tiobundle')
 
     def setUp(self):
         self.output_directories = []
@@ -49,7 +51,7 @@ class TestBundler(unittest.TestCase):
         tflite_file = os.path.join(outdir, 'model.tflite')
         with self.assertRaises(bundler.SavedModelDirMisspecificationError):
             bundler.tflite_build_from_saved_model(nonexistent_saved_model_dir, tflite_file)
-    
+
     def test_tflite_build_from_saved_model_with_file_instead_of_saved_model_dir(self):
         outdir = self.create_temp_dir()
         dummy_file = os.path.join(outdir, 'saved_model_dir')
@@ -77,9 +79,83 @@ class TestBundler(unittest.TestCase):
 
         extracted_paths_glob = os.path.join(extraction_dir, tiobundle_name, '**/*')
         extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
-        self.assertEqual(len(extracted_paths), 4)
 
         expected_files = {'model.tflite', 'model.json', 'assets', 'assets/labels.txt'}
+        self.assertEqual(len(extracted_paths), len(expected_files))
+
+        expected_paths = {
+            os.path.join(extraction_dir, tiobundle_name, expected_file)
+            for expected_file in expected_files
+        }
+        self.assertSetEqual(set(extracted_paths), expected_paths)
+
+    def test_savedmodel_tiobundle_build(self):
+        outdir = self.create_temp_dir()
+        outfile = os.path.join(outdir, 'savedmodel.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        bundler.tiobundle_build(
+            os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'train'),
+            os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'model.json'),
+            os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'assets'),
+            tiobundle_name,
+            outfile
+        )
+
+        extraction_dir = self.create_temp_dir()
+        with zipfile.ZipFile(outfile, 'r') as tiobundle_zip:
+            tiobundle_zip.extractall(path=extraction_dir)
+
+        extracted_paths_glob = os.path.join(extraction_dir, tiobundle_name, '**/*')
+        extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
+
+        expected_files = {
+            'train',
+            'train/saved_model.pb',
+            'train/variables',
+            'train/variables/variables.index',
+            'train/variables/variables.data-00000-of-00001',
+            'model.json',
+            'assets',
+            'assets/labels.txt'
+        }
+        self.assertEqual(len(extracted_paths), len(expected_files))
+
+        expected_paths = {
+            os.path.join(extraction_dir, tiobundle_name, expected_file)
+            for expected_file in expected_files
+        }
+        self.assertSetEqual(set(extracted_paths), expected_paths)
+
+    def test_tiobundle_build_with_nested_assets(self):
+        outdir = self.create_temp_dir()
+        outfile = os.path.join(outdir, 'test.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        bundler.tiobundle_build(
+            os.path.join(self.NESTED_ASSETS_TIOBUNDLE, 'model.tflite'),
+            os.path.join(self.NESTED_ASSETS_TIOBUNDLE, 'model.json'),
+            os.path.join(self.NESTED_ASSETS_TIOBUNDLE, 'assets'),
+            tiobundle_name,
+            outfile
+        )
+
+        extraction_dir = self.create_temp_dir()
+        with zipfile.ZipFile(outfile, 'r') as tiobundle_zip:
+            tiobundle_zip.extractall(path=extraction_dir)
+
+        extracted_paths_glob = os.path.join(extraction_dir, tiobundle_name, '**/*')
+        extracted_paths = glob.glob(extracted_paths_glob, recursive=True)
+
+        expected_files = {
+            'model.tflite',
+            'model.json',
+            'assets',
+            'assets/labels.txt',
+            'assets/labels2.txt',
+            'assets/misc',
+            'assets/misc/misc.txt'
+        }
+        self.assertEqual(len(extracted_paths), len(expected_files))
+
         expected_paths = {
             os.path.join(extraction_dir, tiobundle_name, expected_file)
             for expected_file in expected_files
@@ -108,21 +184,6 @@ class TestBundler(unittest.TestCase):
         with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
             bundler.tiobundle_build(
                 os.path.join(outdir, 'model.tflite'),
-                os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
-                os.path.join(self.TEST_TIOBUNDLE, 'assets'),
-                tiobundle_name,
-                outfile
-            )
-
-    def test_tiobundle_build_when_tflite_path_is_not_file(self):
-        outdir = self.create_temp_dir()
-        outfile = os.path.join(outdir, 'test.tiobundle.zip')
-        tiobundle_name = 'actual.tiobundle'
-        tflite_path = os.path.join(outdir, 'model.tflite')
-        os.mkdir(tflite_path)
-        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
-            bundler.tiobundle_build(
-                tflite_path,
                 os.path.join(self.TEST_TIOBUNDLE, 'model.json'),
                 os.path.join(self.TEST_TIOBUNDLE, 'assets'),
                 tiobundle_name,
