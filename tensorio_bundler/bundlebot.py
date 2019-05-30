@@ -9,6 +9,7 @@ import requests
 
 from . import bundler
 
+# TODO: Replace this with the slack_invoker.parse.slack_url method recently added to slack_invoker
 def slack_url_text(maybe_slack_url):
     """
     If input is a slack-encoded URL (enclosed by < and >), then returns the raw URL, otherwise
@@ -44,7 +45,7 @@ def generate_bundler_client(bundler_rest_api_url):
         Functional client to TensorIO Bundler REST API
 
         Args:
-        1. build - Specifies whether or not to build from SavedModel dir
+        1. build - Specifies the type of build for the desired bundle
         2. saved_model_dir - Directory containing SavedModel protobuf and variables
         3. tflite_model - Path to TFLite binary
         4. model_json - Path to TensorIO-compatible model.json file
@@ -57,7 +58,7 @@ def generate_bundler_client(bundler_rest_api_url):
         payload = {
             'build': build,
             'saved_model_dir': slack_url_text(saved_model_dir),
-            'tflite_path': slack_url_text(tflite_model),
+            'tflite_model': slack_url_text(tflite_model),
             'model_json_path': slack_url_text(model_json),
             'assets_path': slack_url_text(assets_dir),
             'bundle_name': bundle_name,
