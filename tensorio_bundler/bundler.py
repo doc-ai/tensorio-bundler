@@ -40,6 +40,12 @@ class ZippedTIOBundleMisspecificationError(Exception):
     """
     pass
 
+class TIOZipError(Exception):
+    """
+    Raised if there is an error in the zipping process when creating a TIOBundle.
+    """
+    pass
+
 def tflite_build_from_saved_model(saved_model_dir, outfile):
     """
     Builds TFLite binary from SavedModel directory
@@ -123,23 +129,53 @@ def tiobundle_build(tflite_path, model_json_path, assets_path, bundle_name, outf
         )
 
         if assets_path is not None:
-            # TODO(nkashy1): Generalize this so that the assets are written in recursively
-            # As it stands, the assumption is that the assets directory is flat and contains
-            # no subdirectories
-            assets = tf.gfile.Glob(os.path.join(assets_path, '*'))
-            for asset in assets:
-                asset_basename = os.path.basename(asset)
-                with tf.gfile.Open(asset, 'rb') as asset_file:
-                    asset_bytes = asset_file.read()
-                tiobundle_zip.writestr(
-                    os.path.join(bundle_name, 'assets', asset_basename),
-                    asset_bytes
-                )
+            assets_zip_target = os.path.join(bundle_name, 'assets')
+            write_assets_to_zipfile(assets_path, tiobundle_zip, assets_zip_target)
 
     tf.gfile.Copy(temp_outfile, outfile)
     os.remove(temp_outfile)
 
     return outfile
+
+def write_assets_to_zipfile(assets_dir, zfile, zip_subdir):
+    """
+    Recursively writes the contents of assets directory into assets/ directory in zipfile.
+
+    Raises a TIOZipError if there is an issue writing the assets from assets_dir into the zipfile
+    at the given zip_subdir.
+
+    Args:
+    1. assets_dir - Local or GCS path to be written into zfile
+    2. zfile - zipfile.ZipFile instance representing the zipfile into which assets should be
+       written
+    3. zip_subdir - Path in zipfile under which to write the assets at the given assets_dir
+
+    Returns: None
+    """
+    assets = tf.gfile.Glob(os.path.join(assets_dir, '*'))
+    # Will map asset subdirectories to their target zip subdirectories
+    assets_subdirs = {}
+    for asset in assets:
+        asset_basename = os.path.basename(asset)
+        if tf.gfile.IsDirectory(asset):
+            # The zip subdirectory into which the asset subdirectory should be written is formed
+            # by joining the current zip_subdir with the asset_basename
+            zip_target = os.path.join(zip_subdir, asset_basename)
+            assets_subdirs[asset] = zip_target
+        else:
+            zip_target = os.path.join(zip_subdir, asset_basename)
+            try:
+                with tf.gfile.Open(asset, 'rb') as asset_file:
+                    asset_bytes = asset_file.read()
+                zfile.writestr(zip_target, asset_bytes)
+            except Exception as err:
+                message = 'Error inserting {} into zipfile at {}: {}'.format(asset, zip_target, err)
+                raise TIOZipError(message)
+
+    for assets_subdir in assets_subdirs:
+        write_assets_to_zfile(assets_subdir, zfile, assets_subdirs[assets_subdir])
+
+    return None
 
 def generate_argument_parser():
     """
