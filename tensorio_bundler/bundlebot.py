@@ -40,7 +40,8 @@ def generate_bundler_client(bundler_rest_api_url):
         model_json,
         assets_dir,
         bundle_name,
-        outfile):
+        outfile,
+        repository_path):
         """
         Functional client to TensorIO Bundler REST API
 
@@ -52,6 +53,7 @@ def generate_bundler_client(bundler_rest_api_url):
         5. assets_dir - Path to TensorIO-compatible assets directory
         6. bundle_name - Name of TensorIO tiobundle
         7. outfile - Path to which to write zipped tiobundle file
+        8. repository_path - Optional TensorIO Models repository path at which to register bundle
 
         Returns: Path at which zipped tiobundle was stored
         """
@@ -61,7 +63,8 @@ def generate_bundler_client(bundler_rest_api_url):
             'model_json_path': slack_url_text(model_json),
             'assets_path': slack_url_text(assets_dir),
             'bundle_name': bundle_name,
-            'bundle_output_path': slack_url_text(outfile)
+            'bundle_output_path': slack_url_text(outfile),
+            'repository_path': repository_path
         }
 
         if tflite_model is not None:
