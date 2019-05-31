@@ -8,6 +8,7 @@ import os
 import tempfile
 import zipfile
 
+import requests
 import tensorflow as tf
 
 TFLITE = 'tflite'
@@ -23,8 +24,7 @@ class SavedModelDirMisspecificationError(Exception):
 class TFLiteFileExistsError(Exception):
     """
     Raised in the process of a TFLite build if a file (or directory) already exists
-    at the specified build path.
-    """
+    at the specified build path. """
     pass
 
 class ZippedTIOBundleExistsError(Exception):
@@ -46,6 +46,12 @@ class ZippedTIOBundleMisspecificationError(Exception):
 class TIOZipError(Exception):
     """
     Raised if there is an error in the zipping process when creating a TIOBundle.
+    """
+    pass
+
+class TIOModelsRegistrationError(Exception):
+    """
+    Raised if there is an error registering a bundle against a TensorIO Models repository
     """
     pass
 
@@ -187,6 +193,45 @@ def write_assets_to_zipfile(assets_dir, zfile, zip_subdir):
 
     return None
 
+def register_bundle(bundle_path, resource_path):
+    """
+    Registeres bundle at the given path against a TensorIO Models repository at the given resource
+    path.
+
+    Args:
+    1. bundle_path - path to TensorIO bundle (GCS ok)
+    2. resource_path - Full checkpoint path at which bundle should be registered
+       (e.g. /models/<modelName>/hyperparameters/<hyperparametersName>/checkpoints/<checkpointName>)
+
+    Returns: Response text if the registration was successful, raises an error otherwise.
+    """
+    checkpoints, checkpoint_id = os.path.split(resource_path)
+    if checkpoints == '' or checkpoint_id == '':
+        raise TIOModelsRegistrationError('Invalid resource path: {}'.format(resource_path))
+
+    repository_url = os.environ.get('REPOSITORY')
+    if repository_url is None:
+        # Should be in the form <host>[:<port>]/v1/repository
+        raise TIOModelsRegistrationError('REPOSITORY environment variable not set')
+
+    repository_api_key = os.environ.get('REPOSITORY_API_KEY')
+    if repository_api_key is None:
+        raise TIOModelsRegistrationError('REPOSITORY_API_KEY environment variable not set')
+
+    gcs_prefix = 'gs://'
+    if bundle_path[:len(gcs_prefix)] == gcs_prefix:
+        link = 'https://storage.googleapis.com/{}'.format(bundle_path[len(gcs_prefix):])
+
+    payload = {
+        'checkpointId': checkpoint_id,
+        'link': link
+    }
+    request_url = repository_url + checkpoints
+    bearer_token = 'Bearer {}'.format(repository_api_key)
+    headers = {'Authorization': bearer_token}
+    response = requests.post(request_url, headers=headers, json=payload)
+    return response.text
+
 def generate_argument_parser():
     """
     Generates an argument parser for use with the TensorIO Bundler CLI; also used by bundlebot
@@ -223,8 +268,7 @@ def generate_argument_parser():
         required=False,
         help='Path to assets directory'
     )
-    parser.add_argument(
-        '--bundle-name',
+    parser.add_argument( '--bundle-name',
         required=True,
         help='Name of tiobundle'
     )
@@ -232,6 +276,17 @@ def generate_argument_parser():
         '--outfile',
         required=False,
         help='Path at which tiobundle zipfile should be created; defaults to <BUNDLE_NAME>.zip'
+    )
+    parser.add_argument(
+        '--repository-path',
+        required=False,
+        default='',
+        help=(
+            '(Optional) TensorIO models repository resource path at which to save the bundle; the '
+            'path should be of the form /models/<modelName>/hyperparameters/<hyperparametersName>/'
+            'checkpoints/<checkpointName>; if specified, requires the REPOSITORY and '
+            'REPOSITORY_API_KEY and environment variables to be set.'
+        )
     )
 
     return parser
@@ -269,6 +324,17 @@ if __name__ == '__main__':
         args.bundle_name,
         tiobundle_zip
     ))
-    tiobundle_build(model_path, args.model_json, args.assets_dir, args.bundle_name, tiobundle_zip)
+    bundle_path = tiobundle_build(
+        model_path,
+        args.model_json,
+        args.assets_dir,
+        args.bundle_name,
+        tiobundle_zip
+    )
+    print('Bundle created: {}'.format(bundle_path))
+
+    if args.repository_path != '':
+        registration = register_bundle(bundle_path, args.repository_path)
+        print('Bundle registered against repository: {}'.format(registration))
 
     print('Done!')

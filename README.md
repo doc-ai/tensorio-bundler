@@ -76,6 +76,21 @@ bundler or you can bind mount in a service account credentials file and set the
 NOTE: These instructions are extremely sparse at the moment. They will not be so forever.
 
 
+## TensorIO Models repositories
+
+The TensorIO bundler is now integrated with [tensorio-models](https://github.com/doc-ai/tensorio-models)
+via the Repository REST API. Once a bundle has been built, you can use the
+`tensorio_bundler.bundler.register_bundle` method to register it against a TensorIO Models
+repository. The `tensorio_bundler.bundler` CLI allows you to do this automatically through the
+`--repository-path` argument.
+
+This requires two environment variables to be set in your environment:
+
+1. `REPOSITORY` -- a URL for a TensorIO models repository API URL (e.g. https://tio-models-test.dev.docai.beer/rest/v1/repository)
+
+1. `REPISITORY_API_KEY` -- a basic auth token used to authenticate requests against the repository
+REST API.
+
 ## Running tests if you want to contribute to this project
 
 ### Requirements
