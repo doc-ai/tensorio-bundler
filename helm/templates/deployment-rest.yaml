@@ -32,6 +32,14 @@ spec:
           env:
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/etc/access/sacred.json"
+            {{- if .Values.rest.deployment.repository }}
+            - name: REPOSITORY
+              value: {{ .Values.rest.deployment.repository }}
+            {{- end }}
+            {{- if .Values.rest.deployment.repositoryApiKey }}
+            - name: REPOSITORY_API_KEY
+              value: {{ .Values.rest.deployment.repositoryApiKey }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8000

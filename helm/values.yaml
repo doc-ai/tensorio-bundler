@@ -11,6 +11,10 @@ rest:
   service:
     type: ClusterIP
     port: 80
+  deployment:
+    repository: https://repository.tensorio-models.doc.ai/rest/v1/repository
+    # TODO: Use a secret here
+    repositoryApiKey: lol
 bundlebot:
   image:
     repository: docai/tensorio-bundler
