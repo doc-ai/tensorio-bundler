@@ -44,8 +44,7 @@ class BundleHandler:
         5. (Optional) TFLite file path
         6. Bundle name
         7. Bundle output path
-        8. Repository URL
-        9. Repository resource path
+        8. Repository resource path
 
         Possible responses:
         + Responds with status code 200 and body containing the GCS path of the tiobundle if the
