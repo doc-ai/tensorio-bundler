@@ -126,6 +126,19 @@ class TestBundler(unittest.TestCase):
         }
         self.assertSetEqual(set(extracted_paths), expected_paths)
 
+    def test_savedmodel_tiobundle_build_with_invalid_model_json(self):
+        outdir = self.create_temp_dir()
+        outfile = os.path.join(outdir, 'savedmodel.tiobundle.zip')
+        tiobundle_name = 'actual.tiobundle'
+        with self.assertRaises(bundler.InvalidBundleSpecification):
+            bundler.tiobundle_build(
+                os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'train'),
+                os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'invalid_model.json'),
+                os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'assets'),
+                tiobundle_name,
+                outfile
+            )
+
     def test_tiobundle_build_with_nested_assets(self):
         outdir = self.create_temp_dir()
         outfile = os.path.join(outdir, 'test.tiobundle.zip')
