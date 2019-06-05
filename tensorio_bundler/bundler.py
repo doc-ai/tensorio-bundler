@@ -51,7 +51,13 @@ class TIOZipError(Exception):
 
 class TIOModelsRegistrationError(Exception):
     """
-    Raised if there is an error registering a bundle against a TensorIO Models repository
+    Raised if there is an error registering a bundle against a TensorIO Models repository.
+    """
+    pass
+
+class InvalidBundleSpecification(Exception):
+    """
+    Raised if the bundle specification (e.g. model.json) is invalid.
     """
     pass
 
@@ -120,23 +126,26 @@ def tiobundle_build(model_path, model_json_path, assets_path, bundle_name, outfi
         with tf.gfile.Open(model_json_path, 'rb') as model_json_file:
             model_json = model_json_file.read()
             model_json_string = model_json.decode('utf-8')
-            model_spec = json.loads(model_json_string)
+            bundle_spec = json.loads(model_json_string)
         tiobundle_zip.writestr(
             os.path.join(bundle_name, 'model.json'),
             model_json
         )
 
+        model_spec = bundle_spec.get('model', {})
         if tf.gfile.IsDirectory(model_path):
             # We are bundling a SavedModel directory.
             # It goes into the train/ subdirectory of bundle
-            saved_model_target = os.path.join(bundle_name, 'train')
+            model_dirname = model_spec.get('file')
+            if model_dirname is None:
+                raise InvalidBundleSpecification('No "file" specified under "model" key')
+            saved_model_target = os.path.join(bundle_name, model_dirname)
             write_assets_to_zipfile(model_path, tiobundle_zip, saved_model_target)
         else:
             # We are bundling a tflite file.
             # We will store the tflite file under the model_filename specified in the model.json
             # If this is not specified, we store the file as "model.tflite"
-            tflite_spec = model_spec.get('model', {})
-            model_filename = tflite_spec.get('file', 'model.tflite')
+            model_filename = model_spec.get('file', 'model.tflite')
             with tf.gfile.Open(model_path, 'rb') as tflite_file:
                 tflite_model = tflite_file.read()
             tiobundle_zip.writestr(
