@@ -1,0 +1,20 @@
+1. generate tflite from exported model (.pb and variables)
+tflite_convert \
+  --saved_model_dir=1574437435/ \
+  --output_file=model.tflite
+
+2. use tiobundle.py to generate a zip file
+python tiobundle.py \
+    --tflite-model ./model.tflite \
+    --model-json ./model.json \
+    --assets-dir ./assets \
+    --bundle-name eyecolor-b3-1e5.tiobundle \
+    --outfile eyecolor-b3-1e5.tiobundle.zip
+
+delete the line "labels": "labels.txt" from the json file:
+Net runner model doesn't show label content, only classification result
+
+3. upload zip file, labels, model.json, etc to gs://tensorio-bundels/
+
+4. In net runner: download model
+http://storage.googleapis.com/tensorio-bundles/<name_of_file>/<version_of_model>/<model_name>.tiobundle.zip
