@@ -81,7 +81,7 @@ def tflite_build_from_saved_model(saved_model_dir, outfile):
              'directory').format(saved_model_dir)
         )
 
-    converter = tf.contrib.lite.TFLiteConverter.from_saved_model(saved_model_dir)
+    converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
     tflite_model = converter.convert()
     with tf.gfile.Open(outfile, 'wb') as outf:
         outf.write(tflite_model)
