@@ -15,12 +15,6 @@ rest:
     repository: https://repository.tensorio-models.doc.ai/rest/v1/repository
     # TODO: Use a secret here
     repositoryApiKey: lol
-bundlebot:
-  image:
-    repository: docai/tensorio-bundler
-    tag: latest
-    pullPolicy: Always
-  rtmPollInterval: "2"
 secret:
   name: tensorio-bundler
   sacredKey: sacred.json

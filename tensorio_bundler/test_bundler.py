@@ -130,7 +130,7 @@ class TestBundler(unittest.TestCase):
         outdir = self.create_temp_dir()
         outfile = os.path.join(outdir, 'savedmodel.tiobundle.zip')
         tiobundle_name = 'actual.tiobundle'
-        with self.assertRaises(bundler.InvalidBundleSpecification):
+        with self.assertRaises(bundler.ZippedTIOBundleMisspecificationError):
             bundler.tiobundle_build(
                 os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'train'),
                 os.path.join(self.SAVED_MODEL_TIOBUNDLE, 'invalid_model.json'),
