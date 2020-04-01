@@ -1,6 +1,8 @@
 # tensorio-bundler
+
 Create TensorIO model bundles
 
+<span style="color:red;">This package has been deprecated and is no longer supported. Please use the [Tensor/IO Python Package](https://github.com/doc-ai/tensorio-python-package) instead.</span>
 
 ## Running the bundler from the command line
 
